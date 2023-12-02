@@ -1,0 +1,95 @@
+﻿@page "/counter"
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<div>
+    Open devtools to see the output and errors if any. Using the InvokeAsync option may cause the page to no longer work until reloaded.
+</div>
+<p role="status">Current text: @screenData</p>
+<button class="btn btn-primary" @onclick="ButtonClicked">Use InvokeAsync</button>
+<button class="btn btn-primary" @onclick="ButtonClickedAlt">Use InvokeAsyncAlt</button>
+
+@code {
+    private string screenData = "";
+
+    private async void ButtonClicked()
+    {
+        Console.WriteLine("Message1,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+        screenData = "AfterMessage1";
+
+        await Task.Run(async () =>
+        {
+            Console.WriteLine("Message2,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            await Task.Delay(2000);
+
+            Console.WriteLine("Message3,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            await InvokeAsync(() =>
+            {
+                screenData = "AfterMessage3";
+                Console.WriteLine("Message4,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+                StateHasChanged();
+            });
+
+            await Task.Delay(2000);
+            Console.WriteLine("Message5,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+        });
+
+        Console.WriteLine("Message6,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+        screenData = "AfterMessage6";
+
+        StateHasChanged();
+
+    }
+
+    private async void ButtonClickedAlt()
+    {
+        Console.WriteLine("Message1,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+        screenData = "AfterMessage1";
+
+        await Task.Run(async () =>
+        {
+            Console.WriteLine("Message2,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            await Task.Delay(2000);
+
+            Console.WriteLine("Message3,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            await InvokeAsyncAlt(() =>
+            {
+                screenData = "AfterMessage3"; 
+                Console.WriteLine("Message4,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+                StateHasChanged();
+            });
+
+            await Task.Delay(2000);
+            Console.WriteLine("Message5,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+        });
+
+        Console.WriteLine("Message6,MyThreadID:" + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+        screenData = "AfterMessage6";
+
+        StateHasChanged();
+
+    }
+
+    SynchronizationContext sctx = SynchronizationContext.Current!;
+    Task InvokeAsyncAlt(Action action)
+    {
+        sctx.Post((object state) => action(), null);
+        return Task.CompletedTask;
+    }
+    Task InvokeAsyncAlt(Func<Task> action)
+    {
+        sctx.Post(async (object state) => await action(), null);
+        return Task.CompletedTask;
+    }
+
+}
